@@ -1,9 +1,10 @@
 import gym
 import numpy as np
 import pygame
+from gym import spaces
 
 class CooperativeNavigationEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, n_neighbours=2):
         super().__init__()
         self.map_size = 10
         self.cell_size = 70  # Size of each grid cell in pixels
@@ -18,8 +19,16 @@ class CooperativeNavigationEnv(gym.Env):
             "Echo": (9, 2),
             "Foxtrot": (2, 0)
         }
-        # Define action space and observation space here
-        # Initialize agents, targets, and any other parameters
+        self.n_neighbours = n_neighbours
+        
+        self.action_space = gym.spaces.Discrete(5)  # Up, Down, Left, Right, Stay
+        obs_space_size = 2 + 2 + (self.n_neighbours * 2)
+        self.observation_space = spaces.Box(
+            low=-self.map_size,  # Lower bound (map size as a rough bound)
+            high=self.map_size,  # Upper bound
+            shape=(obs_space_size,),  # Shape of the observation vector
+            dtype=np.float32
+        )
         
         # Initialize Pygame
         pygame.init()
