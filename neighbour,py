@@ -1,0 +1,61 @@
+import random
+
+class AgentTest():
+    def __init__(self, position, id):
+        self.id = id
+        self.position = position
+        self.neighbours = []
+        
+    def __str__(self):
+        return f"{self.id}: {self.position}"
+        
+    def random_pos():
+        return (random.randint(0, 9), random.randint(0, 9))
+
+class NeighboursTest():
+    def __init__(self, n_neighbours = 2):
+        self.num_agents = 6
+        self.agentID = 0
+        self.agents = []
+        self.positions = []
+        self.grid = [(x, y) for x in range(10) for y in range(10)]
+
+        self.random_start()
+                
+        self.nearest_neighbour(n_neighbours)
+        
+    def random_start(self):
+        for _ in range(self.num_agents):
+            
+            pos = AgentTest.random_pos()
+            if pos not in self.positions:
+                self.agents.append(AgentTest(pos, self.agentID))
+                self.agentID += 1
+                self.positions.append(pos)
+
+    def manhattan_distance(self, pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) 
+
+    def nearest_neighbour(self, n_neighbours):
+        for agent in self.agents:
+            agent.neighbours = []
+            neighbours = []
+            for other_agent in self.agents:
+                if agent != other_agent:
+                    neighbours.append((other_agent, self.manhattan_distance(agent.position, other_agent.position)))
+            neighbours.sort(key = lambda x: x[1])
+            
+            for i in range(n_neighbours):
+                agent.neighbours.append(neighbours[i][0])
+            
+        
+    
+
+# Run the test function
+NeighboursTest()
+print("Initialisation: ")
+for agent in NeighboursTest().agents:
+    print(f"Agent Position: {agent.position}, Neighbours: {[str(neighbour) for neighbour in agent.neighbours]}")
+    
+# print("-"*50)
+# print(NeighboursTest().positions)
