@@ -1,4 +1,6 @@
 import random
+import pygame
+from render_utils import render_screen
 
 class AgentTest():
     def __init__(self, position, id):
@@ -12,10 +14,10 @@ class AgentTest():
     def random_pos():
         return (random.randint(0, 9), random.randint(0, 9))
 
-class NeighboursTest():
+class Environment():
     def __init__(self, n_neighbours = 2):
+        
         self.num_agents = 6
-        self.agentID = 0
         self.agents = []
         self.positions = []
         self.grid = [(x, y) for x in range(10) for y in range(10)]
@@ -25,12 +27,11 @@ class NeighboursTest():
         self.nearest_neighbour(n_neighbours)
         
     def random_start(self):
-        for _ in range(self.num_agents):
+        for i in range(self.num_agents):
             
             pos = AgentTest.random_pos()
             if pos not in self.positions:
-                self.agents.append(AgentTest(pos, self.agentID))
-                self.agentID += 1
+                self.agents.append(AgentTest(pos, i))
                 self.positions.append(pos)
 
     def manhattan_distance(self, pos1, pos2):
@@ -49,13 +50,10 @@ class NeighboursTest():
                 agent.neighbours.append(neighbours[i][0])
             
         
-    
+# Running the program
 
-# Run the test function
-NeighboursTest()
+Environment()
 print("Initialisation: ")
-for agent in NeighboursTest().agents:
-    print(f"Agent Position: {agent.position}, Neighbours: {[str(neighbour) for neighbour in agent.neighbours]}")
+for agent in Environment().agents:
+    print(f"Agent {agent.id} position: {agent.position}, Neighbours: {[str(neighbour) for neighbour in agent.neighbours]}")
     
-# print("-"*50)
-# print(NeighboursTest().positions)
