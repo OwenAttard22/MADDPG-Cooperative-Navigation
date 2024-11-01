@@ -5,14 +5,30 @@ def manhattan_distance(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 def get_observation(self):
-        # Observation includes each agent's position and nearest neighbors' positions
-        observations = []
-        for agent in self.agents:
-            obs = list(agent.position)  # Agent's own position
-            for neighbour in agent.neighbours:
-                obs.extend(neighbour.position)  # Add each neighbor's position
-            observations.append(obs[:self.observation_space.shape[0]])
-        return np.array(observations)
+    observations = []
+    for agent in self.agents:
+        # Start with agent's own position
+        obs = list(agent.position)
+
+        # Calculate relative distance to each of the agent's two nearest neighbors
+        for neighbour in agent.neighbours[:2]:  # Only take the first 2 neighbors
+            rel_dist = (
+                neighbour.position[0] - agent.position[0],
+                neighbour.position[1] - agent.position[1]
+            )
+            obs.extend(rel_dist)
+
+        # Calculate relative distance to the target
+        rel_target_dist = (
+            agent.target[0] - agent.position[0],
+            agent.target[1] - agent.position[1]
+        )
+        obs.extend(rel_target_dist)
+
+        # Ensure observation matches the expected shape
+        observations.append(obs[:self.observation_space.shape[0]])
+        
+    return np.array(observations)
     
 def calculate_reward(self, agent):
     current_pos = agent.position
@@ -20,10 +36,13 @@ def calculate_reward(self, agent):
     distance = manhattan_distance(current_pos, target_pos)
     reward = 0.0
     
+    if agent.flag == 1:
+        return reward
+    
     if distance == 0:
         reward += 1.0  # Reward for reaching the target
     else:
-        reward -= 0.01 # Time step penalty for not reaching the target
+        reward -= 0.005 # Time step penalty for not reaching the target
         
     for neighbour in agent.neighbours:
         neighbour_pos = neighbour.position
