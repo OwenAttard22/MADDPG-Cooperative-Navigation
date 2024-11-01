@@ -1,5 +1,5 @@
-import random
 import pygame
+import numpy as np
 from main import CooperativeNavigationEnv
 
 # Initialize environment instance
@@ -10,9 +10,6 @@ epoch = 1
 episode_length = 0
 total_reward = 0
 
-# Assign random starting positions to agents for testing
-env.agent_positions = [(random.randint(0, 9), random.randint(0, 9)) for _ in range(env.num_agents)]
-
 # Main test loop to visualize render
 running = True
 while running:
@@ -20,31 +17,26 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    # Randomly move agents for visual testing
-    new_positions = []
-    for pos in env.agent_positions:
-        x, y = pos
-        action = random.choice(['up', 'down', 'left', 'right', 'stay'])
-        if action == 'up' and y > 0:
-            y -= 1
-        elif action == 'down' and y < env.map_size - 1:
-            y += 1
-        elif action == 'left' and x > 0:
-            x -= 1
-        elif action == 'right' and x < env.map_size - 1:
-            x += 1
-        # Append new position to list
-        new_positions.append((x, y))
+    # Randomly select actions for each agent
+    actions = [env.action_space.sample() for _ in env.agents]  # Generate random actions
 
-    # Update agent positions
-    env.agent_positions = new_positions
+    # Take a step in the environment with the random actions
+    observations, rewards, done, _ = env.step(actions)
+
+    # Accumulate rewards for visualization purposes
+    total_reward += np.sum(rewards)
 
     # Render the environment
     env.render(epoch, episode_length, total_reward)
 
     # Increment test metrics
     episode_length += 1
-    total_reward += 0.1  # Increment reward for demonstration
+
+    # Optional: Reset environment if done for continuous testing
+    if done:
+        env.reset()
+        episode_length = 0
+        total_reward = 0
 
 # Close Pygame window after loop
 env.close()

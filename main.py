@@ -3,13 +3,17 @@ import numpy as np
 import pygame
 import random
 from gym import spaces
-from render_utils import render_screen
+from render_utils import *
+from env_utils import *
+from brain import *
 
 class Agent:
-    def __init__(self, position, id):
+    def __init__(self, id, position, target):
         self.id = id
         self.position = position
-        self.neighbours = []  # List to hold references to neighboring agents
+        self.neighbours = []
+        self.target = target
+        self.flag = 0 # Test flag forcing stopping on target
 
 class CooperativeNavigationEnv(gym.Env):
     def __init__(self, n_neighbours=2):
@@ -31,7 +35,7 @@ class CooperativeNavigationEnv(gym.Env):
         self.agent_positions = []
         
         # Action and observation space setup
-        self.action_space = gym.spaces.Discrete(5)
+        self.action_space = gym.spaces.Discrete(5) # 0: up, 1: down, 2: left, 3: right, 4: stay
         obs_space_size = 2 + 2 + (self.n_neighbours * 2)
         self.observation_space = spaces.Box(
             low=-self.map_size,
@@ -54,25 +58,22 @@ class CooperativeNavigationEnv(gym.Env):
 
     def init_agents(self):
         """Randomly initialize agents with unique positions."""
-        for i in range(self.num_agents):
+        for i, key in enumerate(self.endpoints):
             while True:
                 pos = (random.randint(0, 9), random.randint(0, 9))
                 if pos not in self.agent_positions:
-                    agent = Agent(pos, i)
+                    agent = Agent(i, pos, self.endpoints[key])
                     self.agents.append(agent)
                     self.agent_positions.append(pos)
                     break
 
-    def manhattan_distance(self, pos1, pos2):
-        """Calculate Manhattan distance between two positions."""
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     def assign_neighbours(self):
         """Assign nearest neighbors to each agent."""
         for agent in self.agents:
             # Calculate distance to every other agent
             distances = [
-                (other_agent, self.manhattan_distance(agent.position, other_agent.position))
+                (other_agent, manhattan_distance(agent.position, other_agent.position))
                 for other_agent in self.agents if other_agent != agent
             ]
             # Sort agents by distance and pick the nearest n_neighbours
@@ -81,27 +82,27 @@ class CooperativeNavigationEnv(gym.Env):
 
     def reset(self):
         # Reset agent positions and assign target locations
-        self.agent_positions.clear()
+        self.agents.clear()
         self.init_agents()
         self.assign_neighbours()
-        return self._get_observation()
-
-    def _get_observation(self):
-        # Observation includes each agent's position and nearest neighbors' positions
-        observations = []
-        for agent in self.agents:
-            obs = list(agent.position)  # Agent's own position
-            for neighbour in agent.neighbours:
-                obs.extend(neighbour.position)  # Add each neighbor's position
-            observations.append(obs[:self.observation_space.shape[0]])
-        return np.array(observations)
+        return self.get_observation()
 
     def step(self, actions):
-        # Placeholder for updating agent positions based on actions
-        new_observations = self._get_observation()
-        rewards = np.zeros(self.num_agents)  # Placeholder for rewards
-        done = False  # Placeholder for episode completion
-        return new_observations, rewards, done, {}
+        rewards = []
+        
+        for i, agent in enumerate(self.agents):
+            action = select_action(self.action_space)
+            apply_action(self, agent, action)
+            reward = calculate_reward(self, agent)
+            rewards.append(reward)
+        
+        # Update observation after all actions
+        new_observations = get_observation(self)
+        
+        # Check if the episode is done (e.g., all agents reach their targets)
+        done = all(manhattan_distance(agent.position, agent.target) == 0 for agent in self.agents)
+        
+        return new_observations, np.array(rewards), done, {}
 
     def render(self, epoch, episode_length, total_reward):
         render_screen(
@@ -109,7 +110,7 @@ class CooperativeNavigationEnv(gym.Env):
             font=self.font,
             map_size=self.map_size,
             cell_size=self.cell_size,
-            agent_positions=[agent.position for agent in self.agents],
+            agents=self.agents,  # Pass agents directly
             agent_colors=self.agent_colors,
             endpoints=self.endpoints,
             epoch=epoch,
