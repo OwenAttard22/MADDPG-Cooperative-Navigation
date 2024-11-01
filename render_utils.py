@@ -1,6 +1,6 @@
 import pygame
 
-def render_screen(screen, font, map_size, cell_size, agent_positions, agent_colors, endpoints, epoch, episode_length, total_reward, window_size):
+def render_screen(screen, font, map_size, cell_size, agents, agent_colors, endpoints, epoch, episode_length, total_reward, window_size):
     screen.fill((255, 255, 255))  # White background
 
     # Draw the 10x10 board with a chessboard pattern
@@ -17,10 +17,20 @@ def render_screen(screen, font, map_size, cell_size, agent_positions, agent_colo
         screen.blit(text, (x * cell_size + 10, y * cell_size + 10))
         pygame.draw.circle(screen, (0, 0, 0), (x * cell_size + cell_size // 2, y * cell_size + cell_size // 2), 10)
 
-    # Draw agents in different colors
-    for i, (agent_pos, color) in enumerate(zip(agent_positions, agent_colors)):
-        x, y = agent_pos
-        pygame.draw.circle(screen, color, (x * cell_size + cell_size // 2, y * cell_size + cell_size // 2), 15)
+    # Draw agents and their neighbors' connections
+    for agent in agents:
+        agent_x, agent_y = agent.position
+        color = agent_colors[agent.id]
+
+        # Draw lines to neighbors
+        for neighbour in agent.neighbours:
+            neighbour_x, neighbour_y = neighbour.position
+            start_pos = (agent_x * cell_size + cell_size // 2, agent_y * cell_size + cell_size // 2)
+            end_pos = (neighbour_x * cell_size + cell_size // 2, neighbour_y * cell_size + cell_size // 2)
+            pygame.draw.line(screen, color, start_pos, end_pos, 2)  # Draw line to neighbor
+
+        # Draw the agent
+        pygame.draw.circle(screen, color, (agent_x * cell_size + cell_size // 2, agent_y * cell_size + cell_size // 2), 15)
 
     # Display metrics
     metrics_text = f"Epoch: {epoch} | Episode Length: {episode_length} | Total Reward: {total_reward}"
