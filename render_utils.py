@@ -1,6 +1,6 @@
 import pygame
 
-def render_screen(screen, font, map_size, cell_size, agents, agent_colors, endpoints, epoch, episode_length, total_reward, window_size):
+def render_screen(screen, font, map_size, cell_size, agents, agent_colors, endpoints, epoch, episode_length, total_reward, window_size, agent_rewards):
     screen.fill((255, 255, 255))  # White background
 
     # Draw the 10x10 board with a chessboard pattern
@@ -18,7 +18,7 @@ def render_screen(screen, font, map_size, cell_size, agents, agent_colors, endpo
         pygame.draw.circle(screen, (0, 0, 0), (x * cell_size + cell_size // 2, y * cell_size + cell_size // 2), 10)
 
     # Draw agents and their neighbors' connections
-    for agent in agents:
+    for i, agent in enumerate(agents):
         agent_x, agent_y = agent.position
         color = agent_colors[agent.id]
 
@@ -32,7 +32,11 @@ def render_screen(screen, font, map_size, cell_size, agents, agent_colors, endpo
         # Draw the agent
         pygame.draw.circle(screen, color, (agent_x * cell_size + cell_size // 2, agent_y * cell_size + cell_size // 2), 15)
 
-    # Display metrics
+        # Display agent's reward near the agent
+        reward_text = font.render(f"R: {agent_rewards[i]:.2f}", True, (0, 0, 0))
+        screen.blit(reward_text, (agent_x * cell_size, agent_y * cell_size + cell_size // 2 + 10))
+
+    # Display global metrics
     metrics_text = f"Epoch: {epoch} | Episode Length: {episode_length} | Total Reward: {total_reward}"
     metrics_surface = font.render(metrics_text, True, (0, 0, 0))
     screen.blit(metrics_surface, (10, window_size + 20))
